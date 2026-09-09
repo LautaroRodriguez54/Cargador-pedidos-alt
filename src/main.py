@@ -11,6 +11,27 @@ from excel import leer_pedido
 URL_CATALOGO = "https://webapp.altamiragroup.com.ar/catalogo"
 
 
+def mostrar_preview(pedido, ruta_archivo):
+    print()
+    print("=" * 60)
+    print("PEDIDO DETECTADO")
+    print("=" * 60)
+    print(f"Archivo: {ruta_archivo}")
+    print(f"Artículos: {len(pedido)}")
+    print()
+
+    print(f"{'Código':<15} {'Cantidad':>10}")
+    print("-" * 27)
+
+    for articulo in pedido:
+        print(
+            f'{articulo["codigo"]:<15} '
+            f'{articulo["cantidad"]:>10}'
+        )
+
+    print("=" * 60)
+    
+
 def main():
     # Leer pedido
     ruta_archivo = input("Ruta del archivo Excel: ").strip()
