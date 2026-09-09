@@ -5,15 +5,32 @@ from browser import (
     agregar_articulo,
     actualizar_cantidad,
 )
+from excel import leer_pedido
 
 
 URL_CATALOGO = "https://webapp.altamiragroup.com.ar/catalogo"
 
-CODIGO_PRUEBA = "2279/00"
-CANTIDAD_PRUEBA = 4
-
 
 def main():
+    # Leer pedido
+    ruta_archivo = input("Ruta del archivo Excel: ").strip()
+
+    pedido = leer_pedido(ruta_archivo)
+
+    print()
+    print(f"Artículos encontrados: {len(pedido)}")
+    print()
+
+    for articulo in pedido[:2]:
+        print(
+            f'{articulo["codigo"]} x {articulo["cantidad"]}'
+        )
+
+    input(
+        "\nPresioná ENTER para abrir Firefox "
+        "y procesar los primeros 2 artículos..."
+    )
+
     with sync_playwright() as p:
         browser = p.firefox.launch(headless=False)
         page = browser.new_page()
@@ -28,36 +45,42 @@ def main():
             "y presioná ENTER cuando termines..."
         )
 
-        # Buscar artículo
-        encontrado = buscar_articulo(
-            page,
-            CODIGO_PRUEBA
-        )
+        # Procesar solamente los primeros 2 artículos
+        for articulo in pedido[:2]:
 
-        if not encontrado:
-            input("Presioná ENTER para cerrar...")
-            browser.close()
-            return
+            codigo = articulo["codigo"]
+            cantidad = articulo["cantidad"]
 
-        # Agregar artículo
-        agregado = agregar_articulo(
-            page,
-            CODIGO_PRUEBA
-        )
+            print()
+            print(f"Procesando: {codigo} x {cantidad}")
 
-        if not agregado:
-            input("Presioná ENTER para cerrar...")
-            browser.close()
-            return
+            encontrado = buscar_articulo(
+                page,
+                codigo
+            )
 
-        # Actualizar cantidad
-        actualizar_cantidad(
-            page,
-            CODIGO_PRUEBA,
-            CANTIDAD_PRUEBA
-        )
+            if not encontrado:
+                print(f"ERROR: no se encontró {codigo}")
+                continue
 
-        input("Presioná ENTER para cerrar...")
+            agregado = agregar_articulo(
+                page,
+                codigo
+            )
+
+            if not agregado:
+                print(f"ERROR: no se pudo agregar {codigo}")
+                continue
+
+            actualizar_cantidad(
+                page,
+                codigo,
+                cantidad
+            )
+
+            print(f"✓ {codigo} x {cantidad}")
+
+        input("\nPrueba finalizada. Presioná ENTER para cerrar...")
 
         browser.close()
 

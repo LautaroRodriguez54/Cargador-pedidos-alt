@@ -1,4 +1,13 @@
+# Entorno virtual
 .venv/
+
+# Python
 __pycache__/
 *.pyc
+
+# Configuración local de VS Code
 .vscode/
+
+# Archivos de pedidos y resultados
+pedidos/
+resultados/
