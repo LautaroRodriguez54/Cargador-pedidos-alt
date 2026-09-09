@@ -30,27 +30,35 @@ def mostrar_preview(pedido, ruta_archivo):
         )
 
     print("=" * 60)
-    
+
 
 def main():
     # Leer pedido
-    ruta_archivo = input("Ruta del archivo Excel: ").strip()
+    ruta_archivo = input(
+        "Ruta del archivo Excel: "
+    ).strip()
 
     pedido = leer_pedido(ruta_archivo)
 
-    print()
-    print(f"Artículos encontrados: {len(pedido)}")
-    print()
+    if not pedido:
+        print("ERROR: no se encontraron artículos en el pedido.")
+        return
 
-    for articulo in pedido[:2]:
-        print(
-            f'{articulo["codigo"]} x {articulo["cantidad"]}'
-        )
-
-    input(
-        "\nPresioná ENTER para abrir Firefox "
-        "y procesar los primeros 2 artículos..."
+    # Mostrar preview
+    mostrar_preview(
+        pedido,
+        ruta_archivo
     )
+
+    confirmacion = input(
+        "\n¿Cargar este pedido? [S/N]: "
+    ).strip().lower()
+
+    if confirmacion != "s":
+        print("Pedido cancelado.")
+        return
+
+    print("\nPedido confirmado.")
 
     with sync_playwright() as p:
         browser = p.firefox.launch(headless=False)
@@ -66,7 +74,7 @@ def main():
             "y presioná ENTER cuando termines..."
         )
 
-        # Procesar solamente los primeros 2 artículos
+        # Por ahora procesamos solamente los primeros 2.
         for articulo in pedido[:2]:
 
             codigo = articulo["codigo"]
@@ -90,7 +98,9 @@ def main():
             )
 
             if not agregado:
-                print(f"ERROR: no se pudo agregar {codigo}")
+                print(
+                    f"ERROR: no se pudo agregar {codigo}"
+                )
                 continue
 
             actualizar_cantidad(
@@ -101,7 +111,10 @@ def main():
 
             print(f"✓ {codigo} x {cantidad}")
 
-        input("\nPrueba finalizada. Presioná ENTER para cerrar...")
+        input(
+            "\nPrueba finalizada. "
+            "Presioná ENTER para cerrar..."
+        )
 
         browser.close()
 
