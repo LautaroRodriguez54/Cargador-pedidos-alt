@@ -157,7 +157,7 @@ def main():
 
         # Por ahora procesamos solamente los primeros 2.
         for numero, articulo in enumerate(
-            pedido[:2],
+            pedido,
             start=1
         ):
             codigo = articulo["codigo"]
@@ -165,7 +165,7 @@ def main():
 
             print()
             print(
-                f"[{numero}/{len(pedido[:2])}] "
+                f"[{numero}/{len(pedido)}] "
                 f"Procesando: {codigo} x {cantidad}"
             )
 
