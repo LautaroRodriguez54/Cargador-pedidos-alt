@@ -25,11 +25,28 @@ def buscar_articulo(page: Page, codigo: str) -> bool:
 
 
 def agregar_articulo(page: Page, codigo: str) -> bool:
-    """Agrega un artículo al carrito."""
+    """Agrega un artículo al carrito si todavía no está agregado."""
 
     boton_comprar = page.locator(
         f'.action[data-codigo="{codigo}"]'
     )
+
+    if boton_comprar.count() == 0:
+        print(f"ERROR: no se encontró el botón para {codigo}")
+        return False
+
+    boton = boton_comprar.first
+
+    clase = boton.get_attribute("class") or ""
+    texto = boton.inner_text().strip().lower()
+
+    # El artículo ya está en el carrito.
+    if "added" in clase or texto == "eliminar":
+        print(
+            f"Artículo {codigo} ya estaba en el carrito. "
+            "No se vuelve a agregar."
+        )
+        return True
 
     print("Agregando artículo al carrito...")
 
@@ -38,7 +55,7 @@ def agregar_articulo(page: Page, codigo: str) -> bool:
             "/api/v2/carritos/agregar" in response.url
             and response.status == 200
     ) as response_info:
-        boton_comprar.first.click()
+        boton.click()
 
     response = response_info.value
 
