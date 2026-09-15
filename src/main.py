@@ -1,10 +1,6 @@
 from playwright.sync_api import sync_playwright
 
-from browser.altamira import (
-    buscar_articulo,
-    agregar_articulo,
-    actualizar_cantidad,
-)
+from services.processor import procesar_pedido
 from excel.reader import leer_pedido
 
 from ui.main_window import run
@@ -36,34 +32,6 @@ def mostrar_preview(pedido, ruta_archivo):
 
     print()
     print("=" * 60)
-
-
-def procesar_articulo(page, codigo, cantidad):
-    """Procesa un artículo y devuelve True si fue exitoso."""
-
-    encontrado = buscar_articulo(
-        page,
-        codigo
-    )
-
-    if not encontrado:
-        return False
-
-    agregado = agregar_articulo(
-        page,
-        codigo
-    )
-
-    if not agregado:
-        return False
-
-    actualizar_cantidad(
-        page,
-        codigo,
-        cantidad
-    )
-
-    return True
 
 
 def mostrar_resumen(resultados):
@@ -157,63 +125,10 @@ def main():
             "y presioná ENTER cuando termines..."
         )
 
-        # Por ahora procesamos solamente los primeros 2.
-        for numero, articulo in enumerate(
-            pedido,
-            start=1
-        ):
-            codigo = articulo["codigo"]
-            cantidad = articulo["cantidad"]
-
-            print()
-            print(
-                f"[{numero}/{len(pedido)}] "
-                f"Procesando: {codigo} x {cantidad}"
-            )
-
-            try:
-                procesado = procesar_articulo(
-                    page,
-                    codigo,
-                    cantidad
-                )
-
-                if procesado:
-                    print(
-                        f"✓ {codigo} x {cantidad}"
-                    )
-
-                    resultados.append({
-                        "codigo": codigo,
-                        "cantidad": cantidad,
-                        "estado": "ok",
-                    })
-
-                else:
-                    print(
-                        f"✗ {codigo} x {cantidad}"
-                    )
-
-                    resultados.append({
-                        "codigo": codigo,
-                        "cantidad": cantidad,
-                        "estado": "error",
-                        "error": "artículo no encontrado "
-                                 "o no se pudo agregar",
-                    })
-
-            except Exception as error:
-                print(
-                    f"✗ {codigo} x {cantidad}"
-                )
-                print(f"  Error: {error}")
-
-                resultados.append({
-                    "codigo": codigo,
-                    "cantidad": cantidad,
-                    "estado": "error",
-                    "error": str(error),
-                })
+        resultados = procesar_pedido(
+            page,
+            pedido
+        )
 
         mostrar_resumen(resultados)
 
