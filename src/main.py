@@ -1,11 +1,13 @@
 from playwright.sync_api import sync_playwright
 
-from browser import (
+from browser.altamira import (
     buscar_articulo,
     agregar_articulo,
     actualizar_cantidad,
 )
-from excel import leer_pedido
+from excel.reader import leer_pedido
+
+from ui.main_window import run
 
 
 URL_CATALOGO = "https://webapp.altamiragroup.com.ar/catalogo"
@@ -223,4 +225,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    run()
