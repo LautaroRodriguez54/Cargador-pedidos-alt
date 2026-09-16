@@ -1,9 +1,11 @@
 from pathlib import Path
 
 from PySide6.QtCore import (
-    Qt, 
-    Signal, 
-    QTimer)
+    Qt,
+    Signal,
+    QTimer,
+    QThread,
+)
 
 from PySide6.QtWidgets import (
     QFrame,
@@ -15,9 +17,11 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
-    QGraphicsOpacityEffect
 )
 
+from services.worker import OrderProcessorWorker
+from ui.processing_window import ProcessingWindow
+from ui.result_window import ResultWindow
 
 class ReviewWindow(QMainWindow):
     confirmado = Signal()
@@ -28,6 +32,10 @@ class ReviewWindow(QMainWindow):
 
         self.pedido = pedido
         self.ruta_archivo = ruta_archivo
+
+        self.thread = None
+        self.worker = None
+        self.processing_window = None
 
         self.setWindowTitle("Revisar pedido - Altamira Bot")
         self.setMinimumSize(900, 600)
@@ -59,7 +67,6 @@ class ReviewWindow(QMainWindow):
         layout_principal.addSpacing(6)
         layout_principal.addWidget(subtitulo)
 
-        # Separador
         separador = QFrame()
         separador.setFrameShape(QFrame.Shape.HLine)
         separador.setObjectName("separador")
@@ -140,7 +147,6 @@ class ReviewWindow(QMainWindow):
 
         header = self.tabla.horizontalHeader()
         header.setStretchLastSection(True)
-
         header.resizeSection(0, 500)
 
         layout_principal.addWidget(self.tabla)
@@ -291,7 +297,6 @@ class ReviewWindow(QMainWindow):
         toast.setParent(self)
         toast.adjustSize()
 
-        # Posición: arriba a la derecha
         margen = 30
 
         x = self.width() - toast.width() - margen
@@ -301,7 +306,6 @@ class ReviewWindow(QMainWindow):
         toast.show()
         toast.raise_()
 
-        # Lo mantenemos visible unos segundos
         QTimer.singleShot(
             3000,
             toast.deleteLater
@@ -309,7 +313,75 @@ class ReviewWindow(QMainWindow):
 
     def confirmar(self):
         self.confirmado.emit()
+
+        self.processing_window = ProcessingWindow(
+            len(self.pedido)
+        )
+
+        self.thread = QThread()
+        self.worker = OrderProcessorWorker(
+            self.pedido
+        )
+
+        self.worker.moveToThread(
+            self.thread
+        )
+
+        # ------------------------------------------------------------
+        # THREAD → WORKER
+        # ------------------------------------------------------------
+
+        self.thread.started.connect(
+            self.worker.ejecutar
+        )
+
+        # ------------------------------------------------------------
+        # WORKER → UI
+        # ------------------------------------------------------------
+
+        self.worker.articulo_iniciado.connect(
+            self.processing_window.actualizar_articulo
+        )
+
+        self.worker.progreso.connect(
+            self.processing_window.actualizar_progreso
+        )
+
+        # ------------------------------------------------------------
+        # FINALIZACIÓN
+        # ------------------------------------------------------------
+
+        self.worker.terminado.connect(
+            self.procesamiento_terminado
+        )
+
+        self.worker.error.connect(
+            self.procesamiento_error
+        )
+
         self.close()
+
+        self.processing_window.show()
+
+        self.thread.start()
+
+    def procesamiento_terminado(self, resultados):
+        self.thread.quit()
+
+        self.processing_window.close()
+
+        self.result_window = ResultWindow(
+            resultados
+        )
+
+        self.result_window.show()
+
+    def procesamiento_error(self, mensaje):
+        print(
+            f"Error durante el procesamiento: {mensaje}"
+        )
+
+        self.thread.quit()
 
     def cancelar(self):
         self.cancelado.emit()

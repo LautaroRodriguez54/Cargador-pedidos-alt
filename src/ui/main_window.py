@@ -85,24 +85,12 @@ class MainWindow(QMainWindow):
             ruta
         )
 
-        self.review_window.confirmado.connect(
-            self.pedido_confirmado
-        )
-
         self.review_window.cancelado.connect(
             self.pedido_cancelado
         )
 
         self.hide()
         self.review_window.show()
-
-    def pedido_confirmado(self):
-        print("Pedido confirmado.")
-
-        # Por ahora solamente volvemos a mostrar la ventana principal.
-        #
-        # En el siguiente paso conectaremos acá el procesador de Playwright.
-
 
     def pedido_cancelado(self):
         self.estado.setText(
