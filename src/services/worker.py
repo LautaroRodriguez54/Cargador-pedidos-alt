@@ -1,3 +1,5 @@
+from threading import Event
+
 from PySide6.QtCore import QObject, Signal, Slot
 from playwright.sync_api import sync_playwright
 
@@ -10,6 +12,7 @@ URL_CATALOGO = (
 
 
 class OrderProcessorWorker(QObject):
+    """Ejecuta el procesamiento de un pedido en segundo plano."""
 
     progreso = Signal(int, int)
     articulo_iniciado = Signal(str, int)
@@ -18,42 +21,58 @@ class OrderProcessorWorker(QObject):
     login_requerido = Signal()
     terminado = Signal(list)
     error = Signal(str)
+    sesion_cerrada = Signal()
 
     def __init__(self, pedido):
         super().__init__()
 
         self.pedido = pedido
-        self.playwright = None
-        self.browser = None
-        self.page = None
+
+        # Controlan la comunicación entre la interfaz y el
+        # worker mientras este permanece ocupado procesando.
+        self._login_evento = Event()
+        self._cerrar_evento = Event()
 
     @Slot()
     def ejecutar(self):
+        """Inicia Playwright, procesa el pedido y mantiene
+        Firefox abierto hasta que el usuario cierre la sesión.
+        """
+
         resultados = []
 
-        try:
-            # Iniciamos Playwright sin context manager para
-            # mantener el navegador abierto al finalizar.
-            self.playwright = sync_playwright().start()
+        playwright = None
+        browser = None
 
-            self.browser = self.playwright.firefox.launch(
+        try:
+            playwright = sync_playwright().start()
+
+            browser = playwright.firefox.launch(
                 headless=False
             )
 
-            self.page = self.browser.new_page()
+            page = browser.new_page()
 
-            self.page.goto(URL_CATALOGO)
+            page.goto(URL_CATALOGO)
 
-            # Avisamos a la UI que Firefox está listo
-            # y que el usuario debe iniciar sesión.
+            # ----------------------------------------------------
+            # LOGIN MANUAL
+            # ----------------------------------------------------
+
             self.login_requerido.emit()
 
-            # Por ahora usamos una espera bloqueante
-            # temporal para mantener el login manual.
-            input(
-                "Hacé el login manualmente "
-                "y presioná ENTER cuando termines..."
-            )
+            while not self._login_evento.wait(
+                timeout=0.1
+            ):
+                if self._cerrar_evento.is_set():
+                    return
+
+            if self._cerrar_evento.is_set():
+                return
+
+            # ----------------------------------------------------
+            # PROCESAR PEDIDO
+            # ----------------------------------------------------
 
             total = len(self.pedido)
 
@@ -61,6 +80,9 @@ class OrderProcessorWorker(QObject):
                 self.pedido,
                 start=1
             ):
+                if self._cerrar_evento.is_set():
+                    break
+
                 codigo = articulo["codigo"]
                 cantidad = articulo["cantidad"]
 
@@ -69,10 +91,10 @@ class OrderProcessorWorker(QObject):
                     numero
                 )
 
-                resultado = procesar_articulo(
-                    self.page,
+                resultado = self._procesar_articulo(
                     codigo,
-                    cantidad
+                    cantidad,
+                    page
                 )
 
                 resultados.append(resultado)
@@ -86,16 +108,86 @@ class OrderProcessorWorker(QObject):
                     total
                 )
 
+            # ----------------------------------------------------
+            # RESULTADO
+            # ----------------------------------------------------
+
+            if self._cerrar_evento.is_set():
+                return
+
             self.terminado.emit(
                 resultados
             )
 
-            # IMPORTANTE:
-            # No cerramos browser ni Playwright.
-            # El usuario debe poder revisar y enviar
-            # manualmente el pedido en Firefox.
+            # Firefox queda abierto para permitir la revisión
+            # manual del carrito.
+            while not self._cerrar_evento.wait(
+                timeout=0.1
+            ):
+                pass
 
         except Exception as exc:
             self.error.emit(
                 str(exc)
             )
+
+        finally:
+            self._cerrar_playwright(
+                browser,
+                playwright
+            )
+
+            self.sesion_cerrada.emit()
+
+    def _procesar_articulo(
+        self,
+        codigo,
+        cantidad,
+        page
+    ):
+        """Procesa un artículo y captura sus errores."""
+
+        try:
+            return procesar_articulo(
+                page,
+                codigo,
+                cantidad
+            )
+
+        except Exception as exc:
+            return {
+                "codigo": codigo,
+                "cantidad": cantidad,
+                "estado": "error",
+                "error": str(exc),
+            }
+
+    @staticmethod
+    def _cerrar_playwright(
+        browser,
+        playwright
+    ):
+        """Cierra Firefox y Playwright de forma segura."""
+
+        if browser is not None:
+            try:
+                browser.close()
+            except Exception:
+                pass
+
+        if playwright is not None:
+            try:
+                playwright.stop()
+            except Exception:
+                pass
+
+    def continuar_despues_del_login(self):
+        """Indica que el usuario terminó el login manual."""
+
+        self._login_evento.set()
+
+    def cerrar_sesion(self):
+        """Solicita finalizar la sesión y cerrar Firefox."""
+
+        self._cerrar_evento.set()
+        self._login_evento.set()

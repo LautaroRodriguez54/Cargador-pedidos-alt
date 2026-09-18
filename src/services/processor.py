@@ -5,18 +5,25 @@ from browser.altamira import (
 )
 
 
-def procesar_articulo(page, codigo, cantidad):
+def procesar_articulo(
+    page,
+    codigo,
+    cantidad,
+):
     """
     Procesa un artículo completo en Altamira.
 
-    Devuelve un diccionario con el resultado
-    del procesamiento.
+    Devuelve un diccionario con el resultado del procesamiento.
     """
 
     try:
+        # --------------------------------------------------------
+        # BUSCAR ARTÍCULO
+        # --------------------------------------------------------
+
         encontrado = buscar_articulo(
             page,
-            codigo
+            codigo,
         )
 
         if not encontrado:
@@ -27,9 +34,13 @@ def procesar_articulo(page, codigo, cantidad):
                 "error": "Artículo no encontrado",
             }
 
+        # --------------------------------------------------------
+        # AGREGAR AL CARRITO
+        # --------------------------------------------------------
+
         agregado = agregar_articulo(
             page,
-            codigo
+            codigo,
         )
 
         if not agregado:
@@ -37,13 +48,20 @@ def procesar_articulo(page, codigo, cantidad):
                 "codigo": codigo,
                 "cantidad": cantidad,
                 "estado": "error",
-                "error": "No se pudo agregar el artículo",
+                "error": (
+                    "No se pudo agregar el artículo "
+                    "al carrito"
+                ),
             }
+
+        # --------------------------------------------------------
+        # ACTUALIZAR CANTIDAD
+        # --------------------------------------------------------
 
         actualizada = actualizar_cantidad(
             page,
             codigo,
-            cantidad
+            cantidad,
         )
 
         if not actualizada:
@@ -51,8 +69,15 @@ def procesar_articulo(page, codigo, cantidad):
                 "codigo": codigo,
                 "cantidad": cantidad,
                 "estado": "error",
-                "error": "No se pudo actualizar la cantidad",
+                "error": (
+                    "No se pudo actualizar "
+                    "la cantidad"
+                ),
             }
+
+        # --------------------------------------------------------
+        # ÉXITO
+        # --------------------------------------------------------
 
         return {
             "codigo": codigo,
@@ -60,31 +85,10 @@ def procesar_articulo(page, codigo, cantidad):
             "estado": "ok",
         }
 
-    except Exception as error:
+    except Exception as exc:
         return {
             "codigo": codigo,
             "cantidad": cantidad,
             "estado": "error",
-            "error": str(error),
+            "error": str(exc),
         }
-
-
-def procesar_pedido(page, pedido):
-    """
-    Procesa todos los artículos de un pedido.
-
-    Devuelve una lista con el resultado de cada artículo.
-    """
-
-    resultados = []
-
-    for articulo in pedido:
-        resultado = procesar_articulo(
-            page,
-            articulo["codigo"],
-            articulo["cantidad"]
-        )
-
-        resultados.append(resultado)
-
-    return resultados

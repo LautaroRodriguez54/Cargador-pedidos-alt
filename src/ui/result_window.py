@@ -1,17 +1,20 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QMainWindow,
-    QLabel,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QWidget,
     QFrame,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QPushButton,
     QScrollArea,
+    QVBoxLayout,
+    QWidget,
 )
 
 
 class ResultWindow(QMainWindow):
+    """Muestra el resultado final del procesamiento del pedido."""
+
+    cerrar_solicitado = Signal()
 
     def __init__(self, resultados):
         super().__init__()
@@ -22,42 +25,72 @@ class ResultWindow(QMainWindow):
             "Resultado del pedido - Altamira Bot"
         )
 
-        self.setMinimumSize(700, 550)
-        self.resize(850, 650)
+        self.setMinimumSize(
+            700,
+            550
+        )
+
+        self.resize(
+            850,
+            650
+        )
 
         self._crear_interfaz()
 
     def _crear_interfaz(self):
 
         central = QWidget()
-        central.setObjectName("central")
-
-        self.setCentralWidget(central)
-
-        layout = QVBoxLayout(central)
-
-        layout.setContentsMargins(
-            45, 35, 45, 30
+        central.setObjectName(
+            "central"
         )
 
-        layout.setSpacing(18)
+        self.setCentralWidget(
+            central
+        )
+
+        layout = QVBoxLayout(
+            central
+        )
+
+        layout.setContentsMargins(
+            45,
+            35,
+            45,
+            30
+        )
+
+        layout.setSpacing(
+            18
+        )
 
         # ============================================================
         # TÍTULO
         # ============================================================
 
-        titulo = QLabel("Pedido procesado")
-        titulo.setObjectName("titulo")
+        titulo = QLabel(
+            "Pedido procesado"
+        )
+
+        titulo.setObjectName(
+            "titulo"
+        )
 
         subtitulo = QLabel(
             "El procesamiento terminó. "
             "Revisá el resultado antes de cerrar."
         )
 
-        subtitulo.setObjectName("subtitulo")
+        subtitulo.setObjectName(
+            "subtitulo"
+        )
 
-        layout.addWidget(titulo)
-        layout.addWidget(subtitulo)
+        layout.addWidget(
+            titulo
+        )
+
+        layout.addWidget(
+            subtitulo
+        )
 
         # ============================================================
         # CLASIFICAR RESULTADOS
@@ -80,15 +113,24 @@ class ResultWindow(QMainWindow):
         # ============================================================
 
         resumen = QFrame()
-        resumen.setObjectName("resumen")
-
-        resumen_layout = QHBoxLayout(resumen)
-
-        resumen_layout.setContentsMargins(
-            20, 16, 20, 16
+        resumen.setObjectName(
+            "resumen"
         )
 
-        resumen_layout.setSpacing(40)
+        resumen_layout = QHBoxLayout(
+            resumen
+        )
+
+        resumen_layout.setContentsMargins(
+            20,
+            16,
+            20,
+            16
+        )
+
+        resumen_layout.setSpacing(
+            40
+        )
 
         total_label = QLabel(
             f"<b>Total</b><br>{len(self.resultados)}"
@@ -102,17 +144,35 @@ class ResultWindow(QMainWindow):
             f"<b>Errores</b><br>{len(errores)}"
         )
 
-        total_label.setObjectName("dato_resumen")
-        procesados_label.setObjectName("dato_resumen")
-        errores_label.setObjectName("dato_resumen")
+        total_label.setObjectName(
+            "dato_resumen"
+        )
 
-        resumen_layout.addWidget(total_label)
-        resumen_layout.addWidget(procesados_label)
-        resumen_layout.addWidget(errores_label)
+        procesados_label.setObjectName(
+            "dato_resumen"
+        )
+
+        errores_label.setObjectName(
+            "dato_resumen"
+        )
+
+        resumen_layout.addWidget(
+            total_label
+        )
+
+        resumen_layout.addWidget(
+            procesados_label
+        )
+
+        resumen_layout.addWidget(
+            errores_label
+        )
 
         resumen_layout.addStretch()
 
-        layout.addWidget(resumen)
+        layout.addWidget(
+            resumen
+        )
 
         # ============================================================
         # RESULTADOS
@@ -126,25 +186,40 @@ class ResultWindow(QMainWindow):
             "titulo_seccion"
         )
 
-        layout.addWidget(titulo_resultados)
+        layout.addWidget(
+            titulo_resultados
+        )
 
-        # ------------------------------------------------------------
+        # ============================================================
         # ÁREA SCROLLABLE
-        # ------------------------------------------------------------
+        # ============================================================
 
         scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setObjectName("scroll")
+
+        scroll.setWidgetResizable(
+            True
+        )
+
+        scroll.setObjectName(
+            "scroll"
+        )
 
         contenido = QWidget()
 
-        contenido_layout = QVBoxLayout(contenido)
-
-        contenido_layout.setContentsMargins(
-            0, 0, 0, 0
+        contenido_layout = QVBoxLayout(
+            contenido
         )
 
-        contenido_layout.setSpacing(8)
+        contenido_layout.setContentsMargins(
+            0,
+            0,
+            0,
+            0
+        )
+
+        contenido_layout.setSpacing(
+            8
+        )
 
         for resultado in self.resultados:
 
@@ -153,15 +228,21 @@ class ResultWindow(QMainWindow):
             estado = resultado["estado"]
 
             fila = QFrame()
-            fila.setObjectName("fila")
-
-            fila_layout = QHBoxLayout(fila)
-
-            fila_layout.setContentsMargins(
-                15, 10, 15, 10
+            fila.setObjectName(
+                "fila"
             )
 
-            # Código
+            fila_layout = QHBoxLayout(
+                fila
+            )
+
+            fila_layout.setContentsMargins(
+                15,
+                10,
+                15,
+                10
+            )
+
             codigo_label = QLabel(
                 codigo
             )
@@ -170,9 +251,10 @@ class ResultWindow(QMainWindow):
                 "codigo"
             )
 
-            codigo_label.setMinimumWidth(180)
+            codigo_label.setMinimumWidth(
+                180
+            )
 
-            # Cantidad
             cantidad_label = QLabel(
                 f"x {cantidad}"
             )
@@ -181,7 +263,9 @@ class ResultWindow(QMainWindow):
                 "cantidad"
             )
 
-            cantidad_label.setMinimumWidth(80)
+            cantidad_label.setMinimumWidth(
+                80
+            )
 
             fila_layout.addWidget(
                 codigo_label
@@ -192,10 +276,6 @@ class ResultWindow(QMainWindow):
             )
 
             fila_layout.addStretch()
-
-            # --------------------------------------------------------
-            # ESTADO
-            # --------------------------------------------------------
 
             if estado == "ok":
 
@@ -238,7 +318,9 @@ class ResultWindow(QMainWindow):
                     )
                 )
 
-                mensaje_error.setWordWrap(True)
+                mensaje_error.setWordWrap(
+                    True
+                )
 
                 mensaje_error.setObjectName(
                     "detalle_error"
@@ -250,7 +332,9 @@ class ResultWindow(QMainWindow):
 
         contenido_layout.addStretch()
 
-        scroll.setWidget(contenido)
+        scroll.setWidget(
+            contenido
+        )
 
         layout.addWidget(
             scroll,
@@ -284,7 +368,9 @@ class ResultWindow(QMainWindow):
                 "mensaje_ok"
             )
 
-        mensaje.setWordWrap(True)
+        mensaje.setWordWrap(
+            True
+        )
 
         layout.addWidget(
             mensaje
@@ -306,14 +392,16 @@ class ResultWindow(QMainWindow):
             "boton_cerrar"
         )
 
-        cerrar.setMinimumWidth(120)
+        cerrar.setMinimumWidth(
+            120
+        )
 
         cerrar.setCursor(
             Qt.CursorShape.PointingHandCursor
         )
 
         cerrar.clicked.connect(
-            self.close
+            self.cerrar
         )
 
         botones.addWidget(
@@ -329,7 +417,6 @@ class ResultWindow(QMainWindow):
         # ============================================================
 
         self.setStyleSheet("""
-
             QMainWindow {
                 background-color: #f4f5f7;
             }
@@ -355,8 +442,6 @@ class ResultWindow(QMainWindow):
                 color: #6b7280;
             }
 
-            /* -------------------------------------------------- */
-
             QFrame#resumen {
                 background-color: white;
                 border: 1px solid #d9dde3;
@@ -369,15 +454,11 @@ class ResultWindow(QMainWindow):
                 min-width: 90px;
             }
 
-            /* -------------------------------------------------- */
-
             QLabel#titulo_seccion {
                 font-size: 18px;
                 font-weight: 600;
                 color: #202124;
             }
-
-            /* -------------------------------------------------- */
 
             QScrollArea#scroll {
                 background-color: white;
@@ -425,8 +506,6 @@ class ResultWindow(QMainWindow):
                 margin-bottom: 5px;
             }
 
-            /* -------------------------------------------------- */
-
             QLabel#mensaje_ok {
                 background-color: #f3faf4;
                 color: #166534;
@@ -444,8 +523,6 @@ class ResultWindow(QMainWindow):
                 padding: 12px;
                 font-weight: 600;
             }
-
-            /* -------------------------------------------------- */
 
             QPushButton#boton_cerrar {
                 background-color: #dc2626;
@@ -465,3 +542,9 @@ class ResultWindow(QMainWindow):
                 background-color: #991b1b;
             }
         """)
+
+    def cerrar(self):
+        """Solicita cerrar la sesión y la ventana de resultados."""
+
+        self.cerrar_solicitado.emit()
+        self.close()

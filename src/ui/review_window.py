@@ -8,6 +8,7 @@ from PySide6.QtCore import (
 )
 
 from PySide6.QtWidgets import (
+    QApplication,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -20,10 +21,13 @@ from PySide6.QtWidgets import (
 )
 
 from services.worker import OrderProcessorWorker
+
 from ui.processing_window import ProcessingWindow
 from ui.result_window import ResultWindow
 
+
 class ReviewWindow(QMainWindow):
+
     confirmado = Signal()
     cancelado = Signal()
 
@@ -35,105 +39,214 @@ class ReviewWindow(QMainWindow):
 
         self.thread = None
         self.worker = None
-        self.processing_window = None
 
-        self.setWindowTitle("Revisar pedido - Altamira Bot")
-        self.setMinimumSize(900, 600)
-        self.resize(1000, 700)
+        self.processing_window = None
+        self.result_window = None
+
+        self.setWindowTitle(
+            "Revisar pedido - Altamira Bot"
+        )
+
+        self.setMinimumSize(
+            900,
+            600
+        )
+
+        self.resize(
+            1000,
+            700
+        )
 
         self._crear_interfaz()
 
     def _crear_interfaz(self):
+
         central = QWidget()
         self.setCentralWidget(central)
 
         layout_principal = QVBoxLayout(central)
-        layout_principal.setContentsMargins(40, 30, 40, 30)
+
+        layout_principal.setContentsMargins(
+            40,
+            30,
+            40,
+            30
+        )
+
         layout_principal.setSpacing(0)
 
         # ============================================================
         # ENCABEZADO
         # ============================================================
 
-        titulo = QLabel("Revisar pedido")
-        titulo.setObjectName("titulo")
+        titulo = QLabel(
+            "Revisar pedido"
+        )
+
+        titulo.setObjectName(
+            "titulo"
+        )
 
         subtitulo = QLabel(
             "Verificá los artículos antes de comenzar la carga."
         )
-        subtitulo.setObjectName("subtitulo")
 
-        layout_principal.addWidget(titulo)
-        layout_principal.addSpacing(6)
-        layout_principal.addWidget(subtitulo)
+        subtitulo.setObjectName(
+            "subtitulo"
+        )
+
+        layout_principal.addWidget(
+            titulo
+        )
+
+        layout_principal.addSpacing(
+            6
+        )
+
+        layout_principal.addWidget(
+            subtitulo
+        )
+
+        # ============================================================
+        # SEPARADOR
+        # ============================================================
 
         separador = QFrame()
-        separador.setFrameShape(QFrame.Shape.HLine)
-        separador.setObjectName("separador")
 
-        layout_principal.addSpacing(25)
-        layout_principal.addWidget(separador)
-        layout_principal.addSpacing(25)
+        separador.setFrameShape(
+            QFrame.Shape.HLine
+        )
+
+        separador.setObjectName(
+            "separador"
+        )
+
+        layout_principal.addSpacing(
+            25
+        )
+
+        layout_principal.addWidget(
+            separador
+        )
+
+        layout_principal.addSpacing(
+            25
+        )
 
         # ============================================================
         # INFORMACIÓN DEL PEDIDO
         # ============================================================
 
         tarjeta_info = QFrame()
-        tarjeta_info.setObjectName("tarjeta")
 
-        layout_info = QVBoxLayout(tarjeta_info)
-        layout_info.setContentsMargins(25, 20, 25, 20)
-        layout_info.setSpacing(6)
+        tarjeta_info.setObjectName(
+            "tarjeta"
+        )
 
-        nombre_archivo = Path(self.ruta_archivo).name
+        layout_info = QVBoxLayout(
+            tarjeta_info
+        )
+
+        layout_info.setContentsMargins(
+            25,
+            20,
+            25,
+            20
+        )
+
+        layout_info.setSpacing(
+            6
+        )
+
+        nombre_archivo = Path(
+            self.ruta_archivo
+        ).name
 
         archivo = QLabel(
             f"<b>Archivo:</b> {nombre_archivo}"
         )
-        archivo.setObjectName("info")
+
+        archivo.setObjectName(
+            "info"
+        )
 
         cantidad = QLabel(
             f"<b>Artículos:</b> {len(self.pedido)}"
         )
-        cantidad.setObjectName("info")
 
-        layout_info.addWidget(archivo)
-        layout_info.addWidget(cantidad)
+        cantidad.setObjectName(
+            "info"
+        )
 
-        layout_principal.addWidget(tarjeta_info)
+        layout_info.addWidget(
+            archivo
+        )
 
-        layout_principal.addSpacing(20)
+        layout_info.addWidget(
+            cantidad
+        )
+
+        layout_principal.addWidget(
+            tarjeta_info
+        )
+
+        layout_principal.addSpacing(
+            20
+        )
 
         # ============================================================
         # TABLA
         # ============================================================
 
         self.tabla = QTableWidget()
-        self.tabla.setObjectName("tabla")
 
-        self.tabla.setColumnCount(2)
-        self.tabla.setHorizontalHeaderLabels(
-            ["Código", "Cantidad"]
+        self.tabla.setObjectName(
+            "tabla"
         )
 
-        self.tabla.setRowCount(len(self.pedido))
+        self.tabla.setColumnCount(
+            2
+        )
 
-        for fila, articulo in enumerate(self.pedido):
+        self.tabla.setHorizontalHeaderLabels(
+            [
+                "Código",
+                "Cantidad"
+            ]
+        )
+
+        self.tabla.setRowCount(
+            len(self.pedido)
+        )
+
+        for fila, articulo in enumerate(
+            self.pedido
+        ):
             codigo = QTableWidgetItem(
                 articulo["codigo"]
             )
 
             cantidad = QTableWidgetItem(
-                str(articulo["cantidad"])
+                str(
+                    articulo["cantidad"]
+                )
             )
 
             cantidad.setTextAlignment(
                 Qt.AlignmentFlag.AlignCenter
             )
 
-            self.tabla.setItem(fila, 0, codigo)
-            self.tabla.setItem(fila, 1, cantidad)
+            self.tabla.setItem(
+                fila,
+                0,
+                codigo
+            )
+
+            self.tabla.setItem(
+                fila,
+                1,
+                cantidad
+            )
 
         self.tabla.setEditTriggers(
             QTableWidget.EditTrigger.NoEditTriggers
@@ -143,41 +256,80 @@ class ReviewWindow(QMainWindow):
             QTableWidget.SelectionBehavior.SelectRows
         )
 
-        self.tabla.verticalHeader().setVisible(False)
+        self.tabla.verticalHeader().setVisible(
+            False
+        )
 
         header = self.tabla.horizontalHeader()
-        header.setStretchLastSection(True)
-        header.resizeSection(0, 500)
 
-        layout_principal.addWidget(self.tabla)
+        header.setStretchLastSection(
+            True
+        )
+
+        header.resizeSection(
+            0,
+            500
+        )
+
+        layout_principal.addWidget(
+            self.tabla
+        )
 
         # ============================================================
         # BOTONES
         # ============================================================
 
-        layout_principal.addSpacing(20)
+        layout_principal.addSpacing(
+            20
+        )
 
         botones = QHBoxLayout()
 
-        boton_cancelar = QPushButton("Cancelar")
-        boton_cancelar.setObjectName("boton_secundario")
+        boton_cancelar = QPushButton(
+            "Cancelar"
+        )
+
+        boton_cancelar.setObjectName(
+            "boton_secundario"
+        )
+
         boton_cancelar.setCursor(
             Qt.CursorShape.PointingHandCursor
         )
-        boton_cancelar.clicked.connect(self.cancelar)
 
-        boton_confirmar = QPushButton("Cargar pedido")
-        boton_confirmar.setObjectName("boton_principal")
+        boton_cancelar.clicked.connect(
+            self.cancelar
+        )
+
+        boton_confirmar = QPushButton(
+            "Cargar pedido"
+        )
+
+        boton_confirmar.setObjectName(
+            "boton_principal"
+        )
+
         boton_confirmar.setCursor(
             Qt.CursorShape.PointingHandCursor
         )
-        boton_confirmar.clicked.connect(self.confirmar)
 
-        botones.addWidget(boton_cancelar)
+        boton_confirmar.clicked.connect(
+            self.confirmar
+        )
+
+        botones.addWidget(
+            boton_cancelar
+        )
+
         botones.addStretch()
-        botones.addWidget(boton_confirmar)
 
-        layout_principal.addLayout(botones)
+        botones.addWidget(
+            boton_confirmar
+        )
+
+        layout_principal.addLayout(
+            botones
+        )
 
         # ============================================================
         # ESTILOS
@@ -287,22 +439,42 @@ class ReviewWindow(QMainWindow):
             }
         """)
 
+    # ================================================================
+    # TOAST
+    # ================================================================
+
     def mostrar_toast(self):
+
         toast = QLabel(
             f"✓  Pedido cargado\n"
             f"{len(self.pedido)} artículos detectados"
         )
 
-        toast.setObjectName("toast")
-        toast.setParent(self)
+        toast.setObjectName(
+            "toast"
+        )
+
+        toast.setParent(
+            self
+        )
+
         toast.adjustSize()
 
         margen = 30
 
-        x = self.width() - toast.width() - margen
+        x = (
+            self.width()
+            - toast.width()
+            - margen
+        )
+
         y = margen
 
-        toast.move(x, y)
+        toast.move(
+            x,
+            y
+        )
+
         toast.show()
         toast.raise_()
 
@@ -311,7 +483,12 @@ class ReviewWindow(QMainWindow):
             toast.deleteLater
         )
 
+    # ================================================================
+    # INICIAR PROCESAMIENTO
+    # ================================================================
+
     def confirmar(self):
+
         self.confirmado.emit()
 
         self.processing_window = ProcessingWindow(
@@ -319,6 +496,7 @@ class ReviewWindow(QMainWindow):
         )
 
         self.thread = QThread()
+
         self.worker = OrderProcessorWorker(
             self.pedido
         )
@@ -327,17 +505,26 @@ class ReviewWindow(QMainWindow):
             self.thread
         )
 
-        # ------------------------------------------------------------
+        # ============================================================
         # THREAD → WORKER
-        # ------------------------------------------------------------
+        # ============================================================
 
         self.thread.started.connect(
             self.worker.ejecutar
         )
 
-        # ------------------------------------------------------------
-        # WORKER → UI
-        # ------------------------------------------------------------
+        # ============================================================
+        # WORKER → PROCESSING WINDOW
+        # ============================================================
+
+        self.worker.login_requerido.connect(
+            self.processing_window.mostrar_login
+        )
+
+        self.processing_window.continuar_login.connect(
+            self.worker.continuar_despues_del_login,
+            Qt.ConnectionType.DirectConnection
+        )
 
         self.worker.articulo_iniciado.connect(
             self.processing_window.actualizar_articulo
@@ -347,9 +534,9 @@ class ReviewWindow(QMainWindow):
             self.processing_window.actualizar_progreso
         )
 
-        # ------------------------------------------------------------
+        # ============================================================
         # FINALIZACIÓN
-        # ------------------------------------------------------------
+        # ============================================================
 
         self.worker.terminado.connect(
             self.procesamiento_terminado
@@ -359,30 +546,111 @@ class ReviewWindow(QMainWindow):
             self.procesamiento_error
         )
 
+        self.worker.sesion_cerrada.connect(
+            self.sesion_cerrada
+        )
+
+        # ============================================================
+        # LIMPIEZA DEL THREAD
+        # ============================================================
+
+        self.thread.finished.connect(
+            self.worker.deleteLater
+        )
+
+        self.thread.finished.connect(
+            self.thread.deleteLater
+        )
+
+        self.thread.finished.connect(
+            QApplication.instance().quit
+        )
+
+        # ============================================================
+        # MOSTRAR VENTANA
+        # ============================================================
+
         self.close()
 
         self.processing_window.show()
 
         self.thread.start()
 
-    def procesamiento_terminado(self, resultados):
-        self.thread.quit()
+    # ================================================================
+    # PROCESAMIENTO TERMINADO
+    # ================================================================
 
+    def procesamiento_terminado(
+        self,
+        resultados
+    ):
         self.processing_window.close()
 
         self.result_window = ResultWindow(
             resultados
         )
 
-        self.result_window.show()
-
-    def procesamiento_error(self, mensaje):
-        print(
-            f"Error durante el procesamiento: {mensaje}"
+        self.result_window.cerrar_solicitado.connect(
+            self.cerrar_sesion
         )
 
-        self.thread.quit()
+        self.result_window.show()
+
+    # ================================================================
+    # CERRAR SESIÓN DE PLAYWRIGHT
+    # ================================================================
+
+    def cerrar_sesion(self):
+
+        if self.worker is not None:
+
+            self.worker.cerrar_sesion()
+
+    # ================================================================
+    # SESIÓN CERRADA
+    # ================================================================
+
+    def sesion_cerrada(self):
+
+        if self.thread is not None:
+
+            self.thread.quit()
+
+    # ================================================================
+    # ERROR
+    # ================================================================
+
+    def procesamiento_error(
+        self,
+        mensaje
+    ):
+
+        if self.processing_window is not None:
+
+            self.processing_window.close()
+
+        self.result_window = ResultWindow(
+            [
+                {
+                    "codigo": "PROCESAMIENTO",
+                    "cantidad": 0,
+                    "estado": "error",
+                    "error": mensaje,
+                }
+            ]
+        )
+
+        self.result_window.cerrar_solicitado.connect(
+            self.cerrar_sesion
+        )
+
+        self.result_window.show()
+
+    # ================================================================
+    # CANCELAR
+    # ================================================================
 
     def cancelar(self):
+
         self.cancelado.emit()
         self.close()

@@ -4,63 +4,54 @@ from playwright.sync_api import Page
 def buscar_articulo(page: Page, codigo: str) -> bool:
     """Busca un artículo en el catálogo y verifica que exista."""
 
-    campo_busqueda = page.locator('input[name="busqueda_simple"]')
+    campo_busqueda = page.locator(
+        'input[name="busqueda_simple"]'
+    )
+
     campo_busqueda.fill(codigo)
     campo_busqueda.press("Enter")
 
-    page.wait_for_load_state("domcontentloaded")
+    page.wait_for_load_state(
+        "domcontentloaded"
+    )
 
-    boton_comprar = page.locator(
+    boton_articulo = page.locator(
         f'.action[data-codigo="{codigo}"]'
     )
 
-    if boton_comprar.count() == 0:
-        print(f"ERROR: no se encontró el artículo {codigo}")
-        return False
-
-    print(f"Artículo {codigo} encontrado.")
-    print("Texto del botón:", boton_comprar.first.inner_text())
-
-    return True
+    return boton_articulo.count() > 0
 
 
 def agregar_articulo(page: Page, codigo: str) -> bool:
-    """Agrega un artículo al carrito si todavía no está agregado."""
+    """
+    Agrega un artículo al carrito si todavía no está agregado.
 
-    boton_comprar = page.locator(
+    Si el artículo ya está en el carrito, no vuelve a agregarlo.
+    """
+
+    boton_articulo = page.locator(
         f'.action[data-codigo="{codigo}"]'
     )
 
-    if boton_comprar.count() == 0:
-        print(f"ERROR: no se encontró el botón para {codigo}")
+    if boton_articulo.count() == 0:
         return False
 
-    boton = boton_comprar.first
+    boton = boton_articulo.first
 
     clase = boton.get_attribute("class") or ""
     texto = boton.inner_text().strip().lower()
 
     # El artículo ya está en el carrito.
+    # Volver a hacer click lo eliminaría.
     if "added" in clase or texto == "eliminar":
-        print(
-            f"Artículo {codigo} ya estaba en el carrito. "
-            "No se vuelve a agregar."
-        )
         return True
-
-    print("Agregando artículo al carrito...")
 
     with page.expect_response(
         lambda response:
             "/api/v2/carritos/agregar" in response.url
             and response.status == 200
-    ) as response_info:
+    ):
         boton.click()
-
-    response = response_info.value
-
-    print("Artículo agregado.")
-    print("Respuesta:", response.status)
 
     return True
 
@@ -68,7 +59,7 @@ def agregar_articulo(page: Page, codigo: str) -> bool:
 def actualizar_cantidad(
     page: Page,
     codigo: str,
-    cantidad: int
+    cantidad: int,
 ) -> bool:
     """Actualiza la cantidad de un artículo del carrito."""
 
@@ -76,33 +67,27 @@ def actualizar_cantidad(
         f'.cantForm[data-codigo="{codigo}"]'
     )
 
-    formulario_cantidad.wait_for(state="visible")
-
-    print("Formulario de cantidad disponible.")
+    formulario_cantidad.wait_for(
+        state="visible"
+    )
 
     campo_cantidad = formulario_cantidad.locator(
         'input[name="cantidad"]'
     )
 
-    boton_confirmar = formulario_cantidad.locator("button")
+    boton_confirmar = formulario_cantidad.locator(
+        "button"
+    )
 
-    campo_cantidad.fill(str(cantidad))
-
-    print(
-        f"Actualizando cantidad de {codigo} "
-        f"a {cantidad}..."
+    campo_cantidad.fill(
+        str(cantidad)
     )
 
     with page.expect_response(
         lambda response:
             "/api/v2/carritos/actualizar" in response.url
             and response.status == 200
-    ) as response_info:
+    ):
         boton_confirmar.click()
-
-    response = response_info.value
-
-    print("Cantidad actualizada.")
-    print("Respuesta:", response.status)
 
     return True
