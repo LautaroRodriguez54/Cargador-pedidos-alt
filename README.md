@@ -2,20 +2,20 @@
 
 Automatización para la carga de pedidos en el catálogo web de Altamira Group.
 
-La herramienta permite tomar pedidos almacenados en archivos Excel (`.xls` y `.xlsx`), extraer automáticamente los códigos de artículos y sus cantidades, y cargarlos en el carrito mediante automatización del navegador.
+Altamira Bot permite tomar pedidos almacenados en archivos Excel (`.xls` y `.xlsx`), extraer automáticamente los códigos de artículos y sus cantidades, revisarlos antes de comenzar y cargarlos en el carrito mediante automatización del navegador.
 
 > Proyecto desarrollado para automatizar una tarea repetitiva de carga manual de pedidos.
 
 ---
 
-## Características actuales
+## Características
 
 - Lectura de archivos `.xls` y `.xlsx`.
 - Detección automática de las columnas `Código` y `Cantidad`.
-- Ignora columnas adicionales del pedido.
+- Soporte para archivos con diferentes estructuras y columnas adicionales.
 - Normalización de códigos con prefijo `ALT-`.
-- Validación básica de códigos y cantidades.
-- Preview del pedido antes de comenzar la carga.
+- Validación y normalización de cantidades.
+- Vista previa del pedido antes de comenzar la carga.
 - Confirmación manual antes de modificar el carrito.
 - Login realizado manualmente por el usuario.
 - Automatización del catálogo mediante Playwright.
@@ -25,136 +25,86 @@ La herramienta permite tomar pedidos almacenados en archivos Excel (`.xls` y `.x
 - Detección de artículos que ya se encuentran en el carrito.
 - Continuación del procesamiento ante errores individuales.
 - Resumen final de artículos procesados y errores.
+- Interfaz gráfica de escritorio desarrollada con PySide6.
+- Ejecutable independiente para Windows.
 
 ---
 
 ## Tecnologías
 
-- **Python**
-- **Playwright**
-- **openpyxl**
-- **xlrd**
-- **Git / GitHub**
+Python
+PySide6
+Playwright
+openpyxl
+xlrd
+Git / GitHub
+PyInstaller
 
+---
+
+## Formatos Excel
+
+La herramienta soporta archivos:
+
+.xls
+.xlsx
+
+No requiere que todos los pedidos tengan exactamente la misma estructura.
+
+El lector busca automáticamente las columnas: Código - Cantidad
+y utiliza esas columnas para construir el pedido.
+Las demás columnas son ignoradas.
+También se normalizan códigos que utilizan el prefijo: ALT-
+Por ejemplo: ALT-2511/02
+se procesa como: 2511/02
 
 ---
 
 ## Instalación
 
-### 1. Clonar el repositorio
-
-```bash
+1. Clonar el repositorio
 git clone <URL_DEL_REPOSITORIO>
 cd altamira-bot
-```
-
-### 2. Crear el entorno virtual
-
-```bash
+2. Crear el entorno virtual
 python -m venv .venv
-```
-
-Activar el entorno en Windows:
-
-```powershell
 .venv\Scripts\Activate.ps1
-```
-
-### 3. Instalar las dependencias
-
-```bash
+3. Instalar las dependencias
 pip install -r requirements.txt
-```
-
-### 4. Instalar Firefox para Playwright
-
-```bash
+4. Instalar Firefox para Playwright
 playwright install firefox
-```
 
 ---
 
-## Uso
+## Ejecutable para Windows
 
-Con el entorno virtual activado:
-
-```bash
-python src/main.py
-```
-
-La aplicación solicita la ruta del archivo Excel:
-
-```text
-Ruta del archivo Excel:
-```
-
-Por ejemplo:
-
-```text
-pedidos\PEDIDO ALTAMIRA PARA TEKOHA CHACO SRL 04092026.xls
-```
-
-Luego muestra un preview del pedido:
-
-```text
-============================================================
-PEDIDO DETECTADO
-============================================================
-Archivo: pedidos\PEDIDO ALTAMIRA PARA TEKOHA CHACO SRL 04092026.xls
-Artículos: 228
-
-Primeros artículos:
-2511/02        x 4
-5051/02        x 1
-5050/56        x 1
-2288/98        x 1
-10350/02       x 15
-
-... y 223 artículos más.
-
-============================================================
-
-¿Cargar este pedido? [S/N]:
-```
-
-El procesamiento solamente comienza cuando el usuario confirma con `S`.
+El proyecto puede empaquetarse como un ejecutable independiente mediante PyInstaller.
+Para generar el ejecutable incluyendo el navegador de Playwright:
+env:PLAYWRIGHT_BROWSERS_PATH="0"
+python -m playwright install firefox
+Luego:
+pyinstaller --clean --noconfirm --windowed --onefile --name AltamiraBot src/main.py
+El ejecutable se genera en: dist/ AltamiraBot.exe
+El ejecutable incluye los componentes necesarios de Playwright y su navegador Firefox, por lo que no requiere una instalación independiente de Python para ejecutarse.
 
 ---
 
-## Autenticación
+## Estado del proyecto
 
-El usuario realiza el login manualmente en el navegador.
+MVP funcional / v1.0
 
-Las credenciales no se almacenan en el código ni en archivos del proyecto.
+La aplicación fue probada con múltiples pedidos reales utilizando diferentes estructuras y formatos de archivos Excel.
 
-La herramienta utiliza la sesión autenticada del navegador para realizar las operaciones necesarias en el catálogo.
+El flujo completo fue validado tanto durante el desarrollo como mediante el ejecutable empaquetado para Windows.
 
----
+La versión actual prioriza:
 
-## Manejo de errores
-
-Cada artículo se procesa individualmente.
-
-Si un artículo no puede ser encontrado o se produce un error durante su procesamiento, el programa registra el fallo y continúa con el siguiente artículo.
-
-Al finalizar se muestra un resumen:
-
-```text
-============================================================
-RESUMEN DEL PROCESAMIENTO
-============================================================
-Total:       84
-Procesados:  82
-Errores:      2
-
-ERRORES:
-------------------------------------------------------------
-- XXXXX/XX x 1 → artículo no encontrado
-- YYYYY/YY x 2 → error durante la actualización
-============================================================
-```
-
-La validación final del carrito queda a cargo del usuario.
+- Automatización confiable.
+- Manejo de errores individuales.
+- Interacción manual en puntos sensibles.
+- Separación de responsabilidades.
+- Facilidad de uso.
+- Distribución mediante un ejecutable independiente.
+- Posibles mejoras futuras
 
 ---
 
@@ -169,29 +119,26 @@ No intenta:
 - Acceder directamente a bases de datos internas.
 - Almacenar credenciales.
 - Modificar información fuera del flujo normal del catálogo.
-
-El usuario debe revisar manualmente el carrito antes de finalizar la compra.
-
----
-
-## Estado del proyecto
-
-**MVP funcional.**
-
-La herramienta ha sido probada con múltiples pedidos reales utilizando diferentes formatos de archivos Excel.
-
-La arquitectura actual separa:
-
-- Lectura y normalización de pedidos.
-- Lógica de procesamiento.
-- Automatización del navegador.
-
-El proyecto continuará evolucionando hacia una aplicación de escritorio más completa y fácil de utilizar.
+- El usuario debe revisar manualmente el carrito antes de finalizar la compra.
+- Los archivos de pedidos y resultados se mantienen fuera del control de versiones para evitar almacenar información comercial en el repositorio.
 
 ---
+
+## Funcionalidades que podrían incorporarse en futuras versiones:
+
+- Generación automática de reportes.
+- Clasificación más detallada de errores.
+- Detección y consolidación de códigos duplicados.
+- Reutilización de sesiones.
+- Opciones de configuración desde la interfaz.
+- Sistema de logs.
+- Tests automatizados.
+- Procesamiento de pedidos a partir de fotografías mediante OCR.
+
+Estas funcionalidades quedan fuera del alcance de la versión actual.
 
 ## Autor
 
-**Lautaro Rodriguez**
+Lautaro Ezequiel Rodriguez
 
 Proyecto personal de automatización y desarrollo de software.

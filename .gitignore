@@ -11,3 +11,7 @@ __pycache__/
 # Archivos de pedidos y resultados
 pedidos/
 resultados/
+
+# PyInstaller
+build/
+dist/
